@@ -1,0 +1,21 @@
+{
+  "name": "lsp-from-scratch",
+  "description": "LSP Client",
+  "author": "harish876",
+  "license": "MIT",
+  "version": "0.0.1",
+  "publisher": "harish876",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/harish876/forge-lsp"
+  },
+  "engines": {
+    "vscode": "^1.75.0"
+  },
+  "dependencies": {
+    "vscode-languageclient": "^8.1.0"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.81.0"
+  }
+}

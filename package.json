@@ -1,0 +1,55 @@
+{
+  "name": "forge-lsp",
+  "description": "Lsp for the forge etl framework",
+  "author": "harish876",
+  "license": "MIT",
+  "version": "1.0.0",
+  "publisher": "harish876",
+  "categories": [],
+  "engines": {
+    "vscode": "^1.75.0"
+  },
+  "activationEvents": [
+    "onLanguage"
+  ],
+  "main": "./client/out/extension",
+  "contributes": {
+    "languages": [
+      {
+        "id": "python",
+        "extensions": [
+          ".py"
+        ],
+        "aliases": [
+          "Python",
+          "python"
+        ],
+        "mimetypes": [
+          "text/x-python"
+        ]
+      }
+    ],
+    "grammars": [
+      {
+        "language": "ini",
+        "scopeName": "source.ini",
+        "path": "./syntaxes/ini.tmLanguage.json"
+      },
+      {
+        "language": "python",
+        "scopeName": "source.python",
+        "path": "./syntaxes/python.tmLanguage.json"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -b",
+    "watch": "tsc -b -w",
+    "postinstall": "cd client && npm install && cd ../server && npm install"
+  },
+  "devDependencies": {
+    "@types/node": "^20.5.7",
+    "typescript": "^5.2.2"
+  }
+}
