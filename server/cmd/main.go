@@ -10,13 +10,14 @@ import (
 	"strings"
 
 	"github.com/harish876/forge-lsp/analysis"
-	"github.com/harish876/forge-lsp/config_store"
+	configstore "github.com/harish876/forge-lsp/config_store"
 	"github.com/harish876/forge-lsp/pkg/lsp"
 	rpc "github.com/harish876/forge-lsp/pkg/rpc"
+	"github.com/harish876/forge-lsp/utils"
 )
 
 func main() {
-	logger := getLogger("/Users/harishgokul/forge-lsp/server/log.txt")
+	logger := utils.GetLogger("/Users/harishgokul/forge-lsp/server/log.txt")
 	logger.Println("Hey man I started")
 	configStore := configstore.NewConfigStore()
 	scanner := bufio.NewScanner(os.Stdin)
@@ -57,7 +58,7 @@ func handlerMessage(logger *log.Logger, method string, content []byte, state ana
 		if err != nil {
 			logger.Println(err)
 		}
-		store.GetSections(sourceCode)
+		store.UpdateSections(sourceCode)
 		logger.Println(store.Sections)
 		msg := lsp.NewInitializeResponse(request.ID)
 		reply := writeResponse(writer, msg)
@@ -83,7 +84,7 @@ func handlerMessage(logger *log.Logger, method string, content []byte, state ana
 			request.Params.TextDocument.URI)
 
 		for _, contentChange := range request.Params.ContentChanges {
-			state.UpdateDocument(request.Params.TextDocument.URI, contentChange.Text)
+			state.UpdateDocument(request.Params.TextDocument.URI, contentChange.Text, store)
 		}
 
 	case "textDocument/hover":
@@ -110,7 +111,7 @@ func handlerMessage(logger *log.Logger, method string, content []byte, state ana
 			request.Params.Context.TriggerCharacter,
 		)
 
-		msg := lsp.NewTextDocumentCompletionResponse(request.ID, store)
+		msg := lsp.NewTextDocumentCompletionResponse(request.ID, request.Params.TextDocument.URI, store)
 		reply := writeResponse(writer, msg)
 		logger.Printf("Sent the reply for textDocumen/completion %s", reply)
 	}
@@ -120,13 +121,4 @@ func writeResponse(writer io.Writer, msg any) string {
 	reply := rpc.EncodeMessage(msg)
 	writer.Write([]byte(reply))
 	return reply
-}
-
-func getLogger(filename string) *log.Logger {
-	logfile, err := os.OpenFile(filename, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0666)
-	if err != nil {
-		panic("Couldn't open file: %s" + filename)
-	}
-
-	return log.New(logfile, "[forge-lsp] ", log.Ldate|log.Ltime|log.Lshortfile)
 }

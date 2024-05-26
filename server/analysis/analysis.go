@@ -2,7 +2,9 @@ package analysis
 
 import (
 	"fmt"
+	"strings"
 
+	configstore "github.com/harish876/forge-lsp/config_store"
 	"github.com/harish876/forge-lsp/pkg/lsp"
 )
 
@@ -20,7 +22,10 @@ func (s *State) OpenDocument(uri, text string) {
 	s.Documents[uri] = text
 }
 
-func (s *State) UpdateDocument(uri, contentChange string) {
+func (s *State) UpdateDocument(uri, contentChange string, store *configstore.ConfigStore) {
+	if strings.Contains(uri, ".ini") {
+		store.UpdateSections([]byte(contentChange))
+	}
 	s.Documents[uri] = contentChange
 }
 

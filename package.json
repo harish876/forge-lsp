@@ -27,6 +27,17 @@
         "mimetypes": [
           "text/x-python"
         ]
+      },
+      {
+        "id": "ini",
+        "aliases": [
+          "INI",
+          "ini"
+        ],
+        "extensions": [
+          ".ini"
+        ],
+        "configuration": "./language-configuration.json"
       }
     ],
     "grammars": [
@@ -46,7 +57,7 @@
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -b",
     "watch": "tsc -b -w",
-    "postinstall": "cd client && npm install && cd ../server && npm install"
+    "postinstall": "cd client && npm install"
   },
   "devDependencies": {
     "@types/node": "^20.5.7",

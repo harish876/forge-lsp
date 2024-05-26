@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/harish876/forge-lsp/utils"
 	sitter "github.com/harish876/go-tree-sitter"
 	ini "github.com/harish876/go-tree-sitter/ini"
 )
@@ -12,6 +13,7 @@ import (
 var (
 	SECTION_NODE_PARENT = "section_name"
 	SECTION_NODE_TYPE   = "text"
+	logger              = utils.GetLogger("/Users/harishgokul/forge-lsp/server/log.txt")
 )
 
 type Section struct {
@@ -39,6 +41,7 @@ type QueryExecutionParams struct {
 	Cursor     *sitter.QueryCursor
 	Query      *sitter.Query
 	Node       *sitter.Node
+	Tree       *sitter.Tree
 	SourceCode []byte
 }
 
@@ -71,21 +74,17 @@ func (store *ConfigStore) OpenConfigFile(filePath string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer file.Close()
 	n, err := file.Read(codeBuf)
 	if err != nil {
 		return nil, err
 	}
 	sourceCode := codeBuf[:n]
-	defer file.Close()
 
-	if err != nil {
-		fmt.Println("Error:", err)
-		return nil, err
-	}
 	return sourceCode, nil
 }
 
-func (store *ConfigStore) GetSections(sourceCode []byte) error {
+func (store *ConfigStore) UpdateSections(sourceCode []byte) error {
 	query := []byte(`
 	(
 		document(
@@ -99,6 +98,10 @@ func (store *ConfigStore) GetSections(sourceCode []byte) error {
 	`)
 
 	q, err := GetQueryCursor(sourceCode, query)
+	if q.Node.HasError() {
+		logger.Println("Syntax Tree has errors")
+	}
+
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -115,7 +118,7 @@ func (store *ConfigStore) GetSections(sourceCode []byte) error {
 		}
 	}
 
-	for key, _ := range store.Sections {
+	for key := range store.Sections {
 		settingsMap := store.Sections[key].Settings
 		_ = settingsMap
 		query := []byte(fmt.Sprintf(`
@@ -136,6 +139,10 @@ func (store *ConfigStore) GetSections(sourceCode []byte) error {
 		`, key))
 
 		q, err := GetQueryCursor(sourceCode, query)
+		// if q.Node.HasError() {
+		// 	logger.Println("Syntax Tree has errors")
+		// 	continue
+		// }
 		if err != nil {
 			return err
 		}
@@ -170,16 +177,27 @@ func (store *ConfigStore) GetSections(sourceCode []byte) error {
 
 func (store *ConfigStore) ListSections() []string {
 	var result []string
-	for key, _ := range store.Sections {
+	for key := range store.Sections {
 		result = append(result, key)
 	}
 	return result
 }
 
-func (store *ConfigStore) ListSettings() []string {
+func (store *ConfigStore) ListAllSettings() []string {
 	var result []string
 	for _, value := range store.Sections {
 		for key, _ := range value.Settings {
+			result = append(result, key)
+		}
+	}
+	return result
+}
+
+func (store *ConfigStore) ListSettings(section string) []string {
+	var result []string
+	if value, ok := store.Sections[section]; ok {
+		for key := range value.Settings {
+			//TODO: get the key as well
 			result = append(result, key)
 		}
 	}

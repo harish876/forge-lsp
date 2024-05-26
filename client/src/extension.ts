@@ -37,12 +37,15 @@ export function activate(context: ExtensionContext) {
   const clientOptions: LanguageClientOptions = {
     // Register the server for all documents by default
     documentSelector: [
-      // { scheme: "file", language: "ini" },
+      { scheme: "file", language: "ini" },
       { scheme: "file", language: "python" }
     ],
     synchronize: {
       // Notify the server about file changes to '.clientrc files contained in the workspace
-      fileEvents: workspace.createFileSystemWatcher("**/.clientrc"),
+      fileEvents: [
+        workspace.createFileSystemWatcher('**/*.py'),
+        workspace.createFileSystemWatcher('**/*.ini'),
+      ]
     },
   };
 

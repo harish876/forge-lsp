@@ -12,7 +12,7 @@ func TestStoreParser(t *testing.T) {
 		fmt.Println(err)
 		return
 	}
-	err = store.GetSections(sourceCode)
+	err = store.UpdateSections(sourceCode)
 	if err != nil {
 		t.Fatal(err)
 	}

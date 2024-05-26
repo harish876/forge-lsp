@@ -1,7 +1,8 @@
 package lsp
 
 import (
-	"github.com/harish876/forge-lsp/config_store"
+	configstore "github.com/harish876/forge-lsp/config_store"
+	"github.com/harish876/forge-lsp/utils"
 )
 
 type TextDocumentItem struct {
@@ -84,7 +85,31 @@ type VersionedTextDocumentIdentifier struct {
 
 type TextDocumentContentChangeEvent struct {
 	//The new text of the whole document.
+	// TextDocumentContentChangePartialEvent
 	Text string `json:"text"`
+}
+
+type TextDocumentContentChangePartialEvent struct {
+	/**
+	 * The range of the document that changed.
+	 */
+	Range Range `json:"range"`
+	/**
+	 * The new text for the provided range.
+	 */
+	Text string `json:"text"`
+}
+
+type Range struct {
+	/**
+	 * The range's start position.
+	 */
+	Start Position `json:"start"`
+
+	/**
+	 * The range's end position.
+	 */
+	End Position `json:"end"`
 }
 
 type HoverRequest struct {
@@ -206,8 +231,9 @@ type CompletionItem struct {
 	Label string `json:"label"`
 }
 
-func NewTextDocumentCompletionResponse(id int, store *configstore.ConfigStore) TextDocumentCompletionResponse {
-	sectionList := store.ListSettings()
+func NewTextDocumentCompletionResponse(id int, uri string, store *configstore.ConfigStore) TextDocumentCompletionResponse {
+	section := utils.GetSectionNameFromUri(uri)
+	sectionList := store.ListSettings(section)
 	var items []CompletionItem
 	for _, section := range sectionList {
 		items = append(items, CompletionItem{
@@ -220,7 +246,7 @@ func NewTextDocumentCompletionResponse(id int, store *configstore.ConfigStore) T
 			ID:  &id,
 		},
 		Result: CompletionList{
-			IsIncomplete: true,
+			IsIncomplete: false,
 			Items:        items,
 		},
 	}
