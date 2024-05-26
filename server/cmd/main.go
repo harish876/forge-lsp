@@ -51,15 +51,8 @@ func handlerMessage(logger *log.Logger, method string, content []byte, state ana
 			request.Params.ClientInfo.Version,
 			request.Params.RootUri)
 
-		uri := strings.TrimPrefix(request.Params.RootUri, "file:")
-		path := filepath.Join(uri, "config", "settings.local.ini")
-		logger.Println(path)
-		sourceCode, err := store.OpenConfigFile(path)
-		if err != nil {
-			logger.Println(err)
-		}
-		store.UpdateSections(sourceCode)
-		logger.Println(store.Sections)
+		go initStore(request, store, logger)
+
 		msg := lsp.NewInitializeResponse(request.ID)
 		reply := writeResponse(writer, msg)
 
@@ -121,4 +114,16 @@ func writeResponse(writer io.Writer, msg any) string {
 	reply := rpc.EncodeMessage(msg)
 	writer.Write([]byte(reply))
 	return reply
+}
+
+func initStore(request lsp.InitializeRequest, store *configstore.ConfigStore, logger *log.Logger) {
+	uri := strings.TrimPrefix(request.Params.RootUri, "file:")
+	path := filepath.Join(uri, "config", "settings.local.ini")
+	logger.Println(path)
+	sourceCode, err := store.OpenConfigFile(path)
+	if err != nil {
+		logger.Println(err)
+	}
+	store.UpdateSections(sourceCode)
+	logger.Println(store.Sections)
 }

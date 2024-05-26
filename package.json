@@ -1,11 +1,16 @@
 {
   "name": "forge-lsp",
-  "description": "Lsp for the forge etl framework",
+  "description": "Lsp for the forge etl framework. Provides Intellisense for config options during development",
   "author": "harish876",
   "license": "MIT",
   "version": "1.0.0",
   "publisher": "harish876",
-  "categories": [],
+  "repository": {
+    "url": "https://github.com/harish876/forge-lsp.git"
+  },
+  "categories": [
+    "Language Packs"
+  ],
   "engines": {
     "vscode": "^1.75.0"
   },
@@ -55,8 +60,8 @@
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
-    "compile": "tsc -b",
-    "watch": "tsc -b -w",
+    "compile": "cd client && tsc",
+    "watch": "cd client && tsc -w",
     "postinstall": "cd client && npm install"
   },
   "devDependencies": {
