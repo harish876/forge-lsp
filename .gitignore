@@ -131,4 +131,5 @@ dist
 .vscode
 example.txt
 log.txt
-server-go/tmp
+server/tmp
+main
