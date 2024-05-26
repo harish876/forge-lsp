@@ -16,6 +16,11 @@ var (
 	logger              = utils.GetLogger("/Users/harishgokul/forge-lsp/server/log.txt")
 )
 
+type Setting struct {
+	Key   string
+	Value string
+}
+
 type Section struct {
 	Settings map[string]string
 }
@@ -193,12 +198,12 @@ func (store *ConfigStore) ListAllSettings() []string {
 	return result
 }
 
-func (store *ConfigStore) ListSettings(section string) []string {
-	var result []string
+func (store *ConfigStore) ListSettings(section string) []Setting {
+	var result []Setting
 	if value, ok := store.Sections[section]; ok {
-		for key := range value.Settings {
+		for key, value := range value.Settings {
 			//TODO: get the key as well
-			result = append(result, key)
+			result = append(result, Setting{Key: key, Value: value})
 		}
 	}
 	return result

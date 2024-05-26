@@ -1,6 +1,8 @@
 package lsp
 
 import (
+	"fmt"
+
 	configstore "github.com/harish876/forge-lsp/config_store"
 	"github.com/harish876/forge-lsp/utils"
 )
@@ -228,7 +230,9 @@ type CompletionItem struct {
 	 * If label details are provided the label itself should
 	 * be an unqualified name of the completion item.
 	 */
-	Label string `json:"label"`
+	Label  string `json:"label"`
+	Kind   int    `json:"kind"`
+	Detail string `json:"detail"`
 }
 
 func NewTextDocumentCompletionResponse(id int, uri string, store *configstore.ConfigStore) TextDocumentCompletionResponse {
@@ -237,7 +241,9 @@ func NewTextDocumentCompletionResponse(id int, uri string, store *configstore.Co
 	var items []CompletionItem
 	for _, section := range sectionList {
 		items = append(items, CompletionItem{
-			Label: section,
+			Label:  section.Key,
+			Detail: fmt.Sprintf("%s = %s", section.Key, section.Value),
+			Kind:   5,
 		})
 	}
 	return TextDocumentCompletionResponse{
