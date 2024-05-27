@@ -1,0 +1,4 @@
+client/*.ts
+client/tsconfig.json
+client/tsconfig.tsbuildinfo
+# client/node_modules

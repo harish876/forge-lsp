@@ -43,8 +43,11 @@ func (s *State) UpdateDocument(uri, contentChange string, store *configstore.Con
 	if strings.Contains(uri, ".ini") {
 		store.UpdateSections([]byte(contentChange))
 	}
-	//need to update the tree
 	s.Documents[uri].Content = contentChange
+	newTree, err := sitter.ParseCtx(context.Background(), []byte(contentChange), python.GetLanguage())
+	if err != nil {
+		s.Documents[uri].Node = newTree
+	}
 }
 
 func (s *State) Hover(id int, uri string, position int) lsp.HoverResponse {
@@ -63,13 +66,11 @@ func (s *State) Hover(id int, uri string, position int) lsp.HoverResponse {
 
 func (s *State) Definition(id int, uri string, line int, store *configstore.ConfigStore) lsp.DefinitionResponse {
 	document := s.Documents[uri]
-	_ = document
 	section := utils.GetSectionNameFromUri(uri)
 	settingNameFromCode := configstore.GetSettingNameByLine([]byte(document.Content), line)
 	var setting configstore.Setting
 
 	if len(settingNameFromCode) > 0 {
-		logger.Println("Setting Name from Code", settingNameFromCode, section, line)
 		if value, ok := store.Sections[section]; ok {
 			if setting, ok = value.Settings[settingNameFromCode[0]]; !ok {
 				logger.Printf("unable to find setting %s", settingNameFromCode[0])

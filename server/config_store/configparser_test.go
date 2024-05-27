@@ -21,17 +21,27 @@ func TestStoreParser(t *testing.T) {
 
 func TestGetSettingFromCapture(t *testing.T) {
 	sourceCode := []byte(`
-from jobs.job_interface import ETLJob
+	class ExtractCsvJob(ETLJob):
 
-class ExtractJsonJob(ETLJob):
-	def __init__(self, config):
-     	config.get("foo")
-		config.get("file_name")
-       	config.get("filename")
+    def __init__(self, config):
+        super()
+        self.__filename = config.get("directory")
 
-	def execute(self, data=None):
-		self.set_data_context('foobar')
-		self.next()
+    def execute(self, data=None):
+        try:
+            if self.__filename is None:
+                return
+
+            data = pd.read_csv(self.__filename)
+            self.set_data_context(data.head())
+            self.next()
+
+        except Exception as e:
+            logging.error(e)
+            raise e
+
+        if data.empty:
+            return
 	`)
 	GetSettingNameByLine(sourceCode, 4)
 }

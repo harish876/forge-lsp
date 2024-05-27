@@ -231,35 +231,56 @@ func GetSettingNameByLine(sourceCode []byte, line int) []string {
 	var result []string
 	lang := python.GetLanguage()
 	query := []byte(`
-		(
-			module (
-				(class_definition
-					body: (block
-						(function_definition
-							body: (block
-							  (expression_statement
-								  (call
-									function: (attribute
-										object: (identifier) @object
-										(#match? @object "config")
-										   attribute: (identifier) @attribute
-										(#match? @attribute "get")
-									)
-									arguments: (argument_list
-										(string
-											(string_content) @setting
-										)
-									)
-								 )
+	(
+		module (
+			(_
+			body: (block
+				(_
+				   body: (block
+					  (expression_statement
+						   [(_
+						   right:(call
+							function: (attribute
+							   object: (identifier) @object
+							   (#match? @object "config")
+								attribute: (identifier) @attribute
+								(#match? @attribute "get")
 							  )
-						   )
+							 arguments: (argument_list
+								(string (string_content) @setting))
+							  )
+							) 
+						   (call
+							function: (_
+							   object: (identifier) @object
+							   (#match? @object "config")
+								attribute: (identifier) @attribute
+								(#match? @attribute "get")
+							  )
+							 arguments: (argument_list
+								(string (string_content) @setting))
+							 )
+							(call
+								arguments: (argument_list
+								(call
+									function: (_
+									   object: (identifier) @object
+									   (#match? @object "config")
+									   attribute: (identifier) @attribute
+									   (#match? @attribute "get")
+							  		)
+								 	arguments: (argument_list
+										(string (string_content) @setting)
+									))))	
+						    	]
+							)
 						)
-					) 
-				) 
-			)
-		)
+					)
+				)	 
+			) 
+	    )
+	)
 	`)
-	_ = query
 	q, err := GetQueryCursor(lang, sourceCode, query)
 	if q.Node.HasError() {
 		logger.Println("Syntax Tree has errors")
@@ -277,7 +298,6 @@ func GetSettingNameByLine(sourceCode []byte, line int) []string {
 		}
 		m = q.Cursor.FilterPredicates(m, q.SourceCode)
 		for _, c := range m.Captures {
-			//&& (uint32(line)+1 == c.Node.StartPoint().Row || uint32(line) == c.Node.StartPoint().Row)
 			if c.Node.Type() == "string_content" && uint32(line) == c.Node.StartPoint().Row {
 				result = append(result, c.Node.Content(sourceCode))
 			}
