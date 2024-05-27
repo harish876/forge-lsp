@@ -18,3 +18,20 @@ func TestStoreParser(t *testing.T) {
 	}
 	fmt.Println(store.Sections)
 }
+
+func TestGetSettingFromCapture(t *testing.T) {
+	sourceCode := []byte(`
+from jobs.job_interface import ETLJob
+
+class ExtractJsonJob(ETLJob):
+	def __init__(self, config):
+     	config.get("foo")
+		config.get("file_name")
+       	config.get("filename")
+
+	def execute(self, data=None):
+		self.set_data_context('foobar')
+		self.next()
+	`)
+	GetSettingNameByLine(sourceCode, 4)
+}

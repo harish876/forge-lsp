@@ -29,6 +29,7 @@ type ServerCapabilities struct {
 	TextDocumentSync   int                `json:"textDocumentSync"`
 	PositionEncoding   string             `json:"positionEncoding,omitempty"`
 	HoverProvider      bool               `json:"hoverProvider"`
+	DefinitionProvider bool               `json:"definitionProvider"`
 	CompletionProvider CompletionProvider `json:"completionProvider,omitempty"`
 }
 
@@ -51,6 +52,7 @@ func NewInitializeResponse(id int) InitializeResponse {
 				TextDocumentSync:   1,
 				PositionEncoding:   "utf-16",
 				HoverProvider:      true,
+				DefinitionProvider: true,
 				CompletionProvider: CompletionProvider{},
 			},
 			ServerInfo: ServerInfo{

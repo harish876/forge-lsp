@@ -27,7 +27,7 @@ type TextDocumentItem struct {
 	/**
 	 * The content of the opened text document.
 	 */
-	Text string `json:"string"`
+	Text string `json:"text"`
 }
 
 type TextDocumentIdentifier struct {
@@ -233,6 +233,29 @@ type CompletionItem struct {
 	Label  string `json:"label"`
 	Kind   int    `json:"kind"`
 	Detail string `json:"detail"`
+}
+
+type DefinitionRequest struct {
+	Request
+	Params DefinitionRequestParams `json:"params"`
+}
+
+type DefinitionRequestParams struct {
+	TextDocumentPositionParams
+}
+
+type DefinitionResponse struct {
+	Response
+	Result Location `json:"result"`
+}
+
+type Location struct {
+	Uri   string `json:"uri"`
+	Range Range  `json:"range"`
+}
+
+type DefinitionResult struct {
+	Contents string `json:"contents"`
 }
 
 func NewTextDocumentCompletionResponse(id int, uri string, store *configstore.ConfigStore) TextDocumentCompletionResponse {

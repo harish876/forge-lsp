@@ -63,8 +63,9 @@ func handlerMessage(logger *log.Logger, method string, content []byte, state ana
 		if err := json.Unmarshal(content, &request); err != nil {
 			logger.Printf("Could Not Unmarshal initialize textDocument/didOpen request %v", err)
 		}
-		logger.Printf("textDocument/didOpen -  URI: %s",
-			request.Params.TextDocument.URI)
+		logger.Printf("textDocument/didOpen %s",
+			request.Params.TextDocument.URI,
+		)
 
 		state.OpenDocument(request.Params.TextDocument.URI, request.Params.TextDocument.Text)
 
@@ -94,6 +95,21 @@ func handlerMessage(logger *log.Logger, method string, content []byte, state ana
 		msg := state.Hover(request.ID, request.Params.TextDocument.URI, request.Params.Position.Line)
 		reply := writeResponse(writer, msg)
 		logger.Printf("Sent the reply for textDocumen/hover %s", reply)
+
+	case "textDocument/definition":
+		var request lsp.DefinitionRequest
+		if err := json.Unmarshal(content, &request); err != nil {
+			logger.Printf("Could Not Unmarshal initialize textDocument/definition request %v", err)
+		}
+		logger.Printf("textDocument/definition -  URI: %s ,  Line: %d , Character %v",
+			request.Params.TextDocument.URI,
+			request.Params.Position.Line,
+			request.Params.TextDocumentPositionParams.Position.Character,
+		)
+
+		msg := state.Definition(request.ID, request.Params.TextDocument.URI, request.Params.Position.Line, store)
+		reply := writeResponse(writer, msg)
+		logger.Printf("Sent the reply for textDocumen/definition %s", reply)
 
 	case "textDocument/completion":
 		var request lsp.TextDocumentCompletionRequest
