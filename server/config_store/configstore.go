@@ -14,7 +14,7 @@ import (
 var (
 	SECTION_NODE_PARENT = "section_name"
 	SECTION_NODE_TYPE   = "text"
-	logger              = utils.GetLogger("/Users/harishgokul/forge-lsp/server/log.txt")
+	logger              = utils.GetLogger("/var/logs/forge-lsp.vscode.log")
 )
 
 type SettingMetadata struct {

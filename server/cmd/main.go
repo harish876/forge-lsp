@@ -17,7 +17,7 @@ import (
 )
 
 func main() {
-	logger := utils.GetLogger("/Users/harishgokul/forge-lsp/server/log.txt")
+	logger := utils.GetLogger("/var/logs/forge-lsp.vscode.log")
 	logger.Println("Hey man I started")
 	configStore := configstore.NewConfigStore()
 	scanner := bufio.NewScanner(os.Stdin)
