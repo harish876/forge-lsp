@@ -16,12 +16,12 @@ export function activate(context: ExtensionContext) {
 
   serverOptions = {
     run: {
-      command: "/Users/harishgokul/forge-lsp/server/tmp/main",
+      command: "/home/harish/personal/forge-lsp/server/main",
       transport: TransportKind.stdio,
 
     },
     debug: {
-      command: "/Users/harishgokul/forge-lsp/server/tmp/main",
+      command: "/home/harish/personal/forge-lsp/server/tmp/main",
       transport: TransportKind.stdio,
     }
   };

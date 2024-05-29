@@ -3,8 +3,11 @@ package main
 import (
 	"bufio"
 	"encoding/json"
+	"flag"
+	"fmt"
 	"io"
 	"log"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"strings"
@@ -16,9 +19,32 @@ import (
 	"github.com/harish876/forge-lsp/utils"
 )
 
+type Args struct {
+	LogFile  string
+	LogLevel string
+}
+
+func ParseArgs() (*Args, error) {
+	logFile := flag.String("file", "forge-lsp.vscode.log", "Path to Log File")
+	logLevel := flag.String("level", "INFO", "Log Level [ INFO | ERROR | DEBUG ]")
+	logStdio := flag.Bool("stdio", true, "Default flag. IDK")
+	_ = logStdio
+
+	flag.Parse()
+
+	return &Args{
+		LogFile:  *logFile,
+		LogLevel: *logLevel,
+	}, nil
+}
+
 func main() {
-	logger := utils.GetLogger("/var/logs/forge-lsp.vscode.log")
-	logger.Println("Hey man I started")
+	args, err := ParseArgs()
+	if err != nil {
+		log.Fatal(err)
+	}
+	logger := utils.NewLogger(args.LogFile, args.LogLevel)
+	logger.Debug(fmt.Sprintf("LSP Server Started %s", args.LogLevel))
 	configStore := configstore.NewConfigStore()
 	scanner := bufio.NewScanner(os.Stdin)
 	scanner.Split(rpc.Split)
@@ -30,7 +56,7 @@ func main() {
 			msg := scanner.Bytes()
 			method, content, err := rpc.DecodeMessage(msg)
 			if err != nil {
-				logger.Printf("We gots some error: %v", err)
+				logger.Error("We gots some error: %v", err)
 			}
 			handlerMessage(logger, method, content, state, writer, configStore)
 		}
@@ -38,32 +64,37 @@ func main() {
 
 }
 
-func handlerMessage(logger *log.Logger, method string, content []byte, state analysis.State, writer io.Writer, store *configstore.ConfigStore) {
-	logger.Printf("Received method: %s", method)
+func handlerMessage(logger *slog.Logger, method string, content []byte, state analysis.State, writer io.Writer, store *configstore.ConfigStore) {
+	logger.Debug(fmt.Sprintf("Received method: %s", method))
 	switch method {
 	case "initialize":
 		var request lsp.InitializeRequest
 		if err := json.Unmarshal(content, &request); err != nil {
-			logger.Printf("Could Not Unmarshal initialize request request %v", err)
+			logger.Error("Could Not Unmarshal initialize request request %v", err)
 		}
-		logger.Printf("Connected to: %s %s %s",
+		logger.Info(
+			"Initialize Request",
+			"Name",
 			request.Params.ClientInfo.Name,
-			request.Params.ClientInfo.Version,
-			request.Params.RootUri)
+			"Version",
+			request.Params.ClientInfo.Name,
+			"RootURI",
+			request.Params.RootUri,
+		)
 
-		go initStore(request, store, logger)
+		go initStore(request, store)
 
 		msg := lsp.NewInitializeResponse(request.ID)
 		reply := writeResponse(writer, msg)
 
-		logger.Printf("Sent the message %s", reply)
+		logger.Info("Sent the message", "reply", reply)
 
 	case "textDocument/didOpen":
 		var request lsp.DidOpenTextDocumentNotification
 		if err := json.Unmarshal(content, &request); err != nil {
-			logger.Printf("Could Not Unmarshal initialize textDocument/didOpen request %v", err)
+			logger.Error("Could Not Unmarshal initialize textDocument/didOpen request %v", err)
 		}
-		logger.Printf("textDocument/didOpen %s",
+		logger.Info("textDocument/didOpen", "URI",
 			request.Params.TextDocument.URI,
 		)
 
@@ -72,9 +103,9 @@ func handlerMessage(logger *log.Logger, method string, content []byte, state ana
 	case "textDocument/didChange":
 		var request lsp.DidChangeTextDocumentNotification
 		if err := json.Unmarshal(content, &request); err != nil {
-			logger.Printf("Could Not Unmarshal initialize textDocument/didChange request %v", err)
+			logger.Error("Could Not Unmarshal initialize textDocument/didChange request %v", err)
 		}
-		logger.Printf("textDocument/didChange-  URI: %s",
+		logger.Info("textDocument/didChange", "URI",
 			request.Params.TextDocument.URI)
 
 		for _, contentChange := range request.Params.ContentChanges {
@@ -84,45 +115,52 @@ func handlerMessage(logger *log.Logger, method string, content []byte, state ana
 	case "textDocument/hover":
 		var request lsp.HoverRequest
 		if err := json.Unmarshal(content, &request); err != nil {
-			logger.Printf("Could Not Unmarshal initialize textDocument/hover request %v", err)
+			logger.Error("Could Not Unmarshal initialize textDocument/hover request %v", err)
 		}
-		logger.Printf("textDocument/hover -  URI: %s ,  Line: %d , Character %d",
+		logger.Info("textDocument/hover",
+			"URI",
 			request.Params.TextDocument.URI,
+			"Line",
 			request.Params.Position.Character,
+			"Character",
 			request.Params.Position.Line,
 		)
 
 		msg := state.Hover(request.ID, request.Params.TextDocument.URI, request.Params.Position.Line)
 		reply := writeResponse(writer, msg)
-		logger.Printf("Sent the reply for textDocumen/hover %s", reply)
+		logger.Info("Sent the reply for textDocumen/hover", "textDocumen/hover", reply)
 
 	case "textDocument/definition":
 		var request lsp.DefinitionRequest
 		if err := json.Unmarshal(content, &request); err != nil {
-			logger.Printf("Could Not Unmarshal initialize textDocument/definition request %v", err)
+			logger.Error("Could Not Unmarshal initialize textDocument/definition request %v", err)
 		}
-		logger.Printf("textDocument/definition -  URI: %s ,  Line: %d , Character %v",
+		logger.Info("textDocument/definition",
+			"URI",
 			request.Params.TextDocument.URI,
+			"Line",
 			request.Params.Position.Line,
+			"Character",
 			request.Params.TextDocumentPositionParams.Position.Character,
 		)
 
 		msg := state.Definition(request.ID, request.Params.TextDocument.URI, request.Params.Position.Line, store)
 		reply := writeResponse(writer, msg)
-		logger.Printf("Sent the reply for textDocumen/definition %s", reply)
+		logger.Info("Sent the reply for textDocumen/definition", "textDocumen/definition", reply)
 
 	case "textDocument/completion":
 		var request lsp.TextDocumentCompletionRequest
 		if err := json.Unmarshal(content, &request); err != nil {
-			logger.Printf("Could Not Unmarshal initialize textDocument/completion request %v", err)
+			logger.Error("Could Not Unmarshal initialize textDocument/completion request %v", err)
 		}
-		logger.Printf("textDocument/completion -  TriggerCharacter: %s",
+		logger.Info("textDocument/completion",
+			"TriggerCharacter",
 			request.Params.Context.TriggerCharacter,
 		)
 
 		msg := lsp.NewTextDocumentCompletionResponse(request.ID, request.Params.TextDocument.URI, store)
 		reply := writeResponse(writer, msg)
-		logger.Printf("Sent the reply for textDocumen/completion %s", reply)
+		logger.Info("Sent the reply for textDocumen/completion", "textDocumen/completion", reply)
 	}
 }
 
@@ -132,14 +170,15 @@ func writeResponse(writer io.Writer, msg any) string {
 	return reply
 }
 
-func initStore(request lsp.InitializeRequest, store *configstore.ConfigStore, logger *log.Logger) {
+func initStore(request lsp.InitializeRequest, store *configstore.ConfigStore) {
+	logger := utils.GetLogger()
 	uri := strings.TrimPrefix(request.Params.RootUri, "file:")
 	path := filepath.Join(uri, "config", "settings.local.ini")
-	logger.Println(path)
+	logger.Debug(path)
 	sourceCode, err := store.OpenConfigFile(path)
 	if err != nil {
-		logger.Println(err)
+		logger.Error("Error at OpenConfigFile", err)
 	}
 	store.UpdateSections(sourceCode)
-	logger.Println(store.Sections)
+	logger.Info("Config Section", "Section", store.Sections)
 }

@@ -12,10 +12,6 @@ import (
 	"github.com/harish876/go-tree-sitter/python"
 )
 
-var (
-	logger = utils.GetLogger("/var/logs/forge-lsp.vscode.log")
-)
-
 type Document struct {
 	Content string
 	Node    *sitter.Node
@@ -65,6 +61,7 @@ func (s *State) Hover(id int, uri string, position int) lsp.HoverResponse {
 }
 
 func (s *State) Definition(id int, uri string, line int, store *configstore.ConfigStore) lsp.DefinitionResponse {
+	logger := utils.GetLogger()
 	document := s.Documents[uri]
 	section := utils.GetSectionNameFromUri(uri)
 	settingNameFromCode := configstore.GetSettingNameByLine([]byte(document.Content), line)
@@ -73,7 +70,7 @@ func (s *State) Definition(id int, uri string, line int, store *configstore.Conf
 	if len(settingNameFromCode) > 0 {
 		if value, ok := store.Sections[section]; ok {
 			if setting, ok = value.Settings[settingNameFromCode[0]]; !ok {
-				logger.Printf("unable to find setting %s", settingNameFromCode[0])
+				logger.Debug(fmt.Sprintf("unable to find setting %s", settingNameFromCode[0]))
 			}
 		}
 	}

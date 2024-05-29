@@ -14,7 +14,6 @@ import (
 var (
 	SECTION_NODE_PARENT = "section_name"
 	SECTION_NODE_TYPE   = "text"
-	logger              = utils.GetLogger("/var/logs/forge-lsp.vscode.log")
 )
 
 type SettingMetadata struct {
@@ -96,6 +95,7 @@ func (store *ConfigStore) OpenConfigFile(filePath string) ([]byte, error) {
 }
 
 func (store *ConfigStore) UpdateSections(sourceCode []byte) error {
+	logger := utils.GetLogger()
 	lang := ini.GetLanguage()
 	query := []byte(`
 	(
@@ -111,7 +111,7 @@ func (store *ConfigStore) UpdateSections(sourceCode []byte) error {
 
 	q, err := GetQueryCursor(lang, sourceCode, query)
 	if q.Node.HasError() {
-		logger.Println("Syntax Tree has errors")
+		logger.Debug("Syntax Tree has errors")
 	}
 
 	if err != nil {
@@ -228,6 +228,7 @@ func (store *ConfigStore) ListSettings(section string) []Setting {
 }
 
 func GetSettingNameByLine(sourceCode []byte, line int) []string {
+	logger := utils.GetLogger()
 	var result []string
 	lang := python.GetLanguage()
 	query := []byte(`
@@ -283,7 +284,7 @@ func GetSettingNameByLine(sourceCode []byte, line int) []string {
 	`)
 	q, err := GetQueryCursor(lang, sourceCode, query)
 	if q.Node.HasError() {
-		logger.Println("Syntax Tree has errors")
+		logger.Debug("Syntax Tree has errors")
 	}
 
 	if err != nil {

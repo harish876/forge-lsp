@@ -1,15 +1,44 @@
 package utils
 
 import (
-	"log"
+	"fmt"
+	"log/slog"
 	"os"
 )
 
-func GetLogger(filename string) *log.Logger {
+var (
+	logger *slog.Logger
+)
+
+func NewLogger(filename string, level string) *slog.Logger {
 	logfile, err := os.OpenFile(filename, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0666)
 	if err != nil {
 		panic("Couldn't open file: %s" + filename)
 	}
+	logger = slog.New(slog.NewJSONHandler(logfile, &slog.HandlerOptions{
+		AddSource: true,
+		Level:     getLogLevel(level),
+	}))
+	return logger
+}
 
-	return log.New(logfile, "[forge-lsp] ", log.Ldate|log.Ltime|log.Lshortfile)
+func GetLogger() *slog.Logger {
+	if logger == nil {
+		fmt.Println("logger not intialized. call new logger")
+		os.Exit(0)
+	}
+	return logger
+}
+
+func getLogLevel(level string) slog.Leveler {
+	switch level {
+	case "INFO":
+		return slog.LevelInfo
+	case "DEBUG":
+		return slog.LevelDebug
+	case "ERROR":
+		return slog.LevelError
+	default:
+		return slog.LevelInfo
+	}
 }
