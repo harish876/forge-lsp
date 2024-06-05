@@ -1,6 +1,6 @@
 import * as path from "path";
 import { workspace, ExtensionContext } from "vscode";
-import { tmpdir } from "os"
+import { tmpdir, homedir } from "os"
 import {
   LanguageClient,
   LanguageClientOptions,
@@ -17,12 +17,13 @@ export function activate(context: ExtensionContext) {
   serverOptions = {
     run: {
       command: "/home/harish/personal/forge-lsp/server/main",
+      args:["--level", "DEBUG","--file",path.join(homedir(),"forge-lsp-vscode.log")],
       transport: TransportKind.stdio,
 
     },
     debug: {
       command: "/home/harish/personal/forge-lsp/server/tmp/main",
-      args:["--level", "DEBUG"],
+      args:["--level", "DEBUG","--file",path.join(tmpdir(),"forge-lsp-vscode.log")],
       transport: TransportKind.stdio,
     }
   };
@@ -32,12 +33,6 @@ export function activate(context: ExtensionContext) {
       { scheme: "file", language: "ini" },
       { scheme: "file", language: "python" }
     ],
-    synchronize: {
-      fileEvents: [
-        workspace.createFileSystemWatcher('**/*.py'),
-        workspace.createFileSystemWatcher('**/*.ini'),
-      ]
-    },
   };
 
   client = new LanguageClient(

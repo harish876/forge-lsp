@@ -126,7 +126,7 @@ func handlerMessage(logger *slog.Logger, method string, content []byte, state an
 			request.Params.Position.Line,
 		)
 
-		msg := state.Hover(request.ID, request.Params.TextDocument.URI, request.Params.Position.Line,store)
+		msg := state.Hover(request.ID, request.Params.TextDocument.URI, request.Params.Position.Line, store)
 		reply := writeResponse(writer, msg)
 		logger.Info("Sent the reply for textDocumen/hover", "textDocumen/hover", reply)
 

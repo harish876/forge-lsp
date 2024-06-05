@@ -3,6 +3,7 @@
 ## Table of Contents
 - [Overview](#overview)
 - [Features](#features)
+- [Build](#build)
 - [Tools Used](#tools-patterns)
 
 ## Overview
@@ -15,6 +16,12 @@ So the aim here was to provide code completion/intellisense for me to know what 
  1. LSP which provides Code completion for all your configs.
  2. Uses a custom Tree Sitter Parser created for .ini files using the tree-sitter CLI.
  3. Fast Config Parsing and Querying. ( Room for enormous improvements here )
+
+## Build
+ - To Locally Build and use the LSP
+    1. Install vsce using the command ```npm install -g vsce  ```
+    2. In the root dir, run vsce package
+    3. Go to your vs code extensions, and click on the install vsix option 
 
 ## Tools Used
 1. Custom made tree sitter parser for ini files - https://github.com/harish876/tree-sitter-ini
