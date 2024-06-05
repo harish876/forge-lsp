@@ -126,7 +126,7 @@ func handlerMessage(logger *slog.Logger, method string, content []byte, state an
 			request.Params.Position.Line,
 		)
 
-		msg := state.Hover(request.ID, request.Params.TextDocument.URI, request.Params.Position.Line)
+		msg := state.Hover(request.ID, request.Params.TextDocument.URI, request.Params.Position.Line,store)
 		reply := writeResponse(writer, msg)
 		logger.Info("Sent the reply for textDocumen/hover", "textDocumen/hover", reply)
 
@@ -157,8 +157,7 @@ func handlerMessage(logger *slog.Logger, method string, content []byte, state an
 			"TriggerCharacter",
 			request.Params.Context.TriggerCharacter,
 		)
-
-		msg := lsp.NewTextDocumentCompletionResponse(request.ID, request.Params.TextDocument.URI, store)
+		msg := state.Completion(request.ID, request.Params.TextDocument.URI, store)
 		reply := writeResponse(writer, msg)
 		logger.Info("Sent the reply for textDocumen/completion", "textDocumen/completion", reply)
 	}

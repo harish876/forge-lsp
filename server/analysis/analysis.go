@@ -46,15 +46,47 @@ func (s *State) UpdateDocument(uri, contentChange string, store *configstore.Con
 	}
 }
 
-func (s *State) Hover(id int, uri string, position int) lsp.HoverResponse {
+func (s *State) Hover(id int, uri string, line int, store *configstore.ConfigStore) lsp.HoverResponse {
 	document := s.Documents[uri]
+	logger := utils.GetLogger()
+
+	section := utils.GetSectionNameFromUri(uri)
+
+	settingNameFromCode, err := configstore.GetSettingNameByLine([]byte(document.Content), line)
+	if err != nil {
+		logger.Error("Definition", "Setting Name From Code Error", err)
+	}
+	var setting configstore.Setting
+
+	if _, ok := store.Sections[section]; !ok {
+		section, _ = configstore.GetSectionNameFromLsHint([]byte(document.Content)) //
+	}
+
+	logger.Debug("Definition", "Section Name From Ls Hint", section)
+	logger.Debug("Definition", "Setting", settingNameFromCode)
+	if len(settingNameFromCode) > 0 {
+		if value, ok := store.Sections[section]; ok {
+			if setting, ok = value.Settings[settingNameFromCode[0]]; !ok {
+				logger.Debug(fmt.Sprintf("unable to find setting %s", settingNameFromCode[0]))
+			}
+		}
+	}
+	var content string
+	if len(section) == 0 {
+		content = "No such section present"
+	} else if len(setting.Key) == 0 {
+		content = fmt.Sprintf("No such value key present under %s", section)
+	} else {
+		content = fmt.Sprintf("Section - %s Key - %s  Value- %s", section, setting.Key, setting.Value)
+	}
+
 	return lsp.HoverResponse{
 		Response: lsp.Response{
 			ID:  &id,
 			RPC: "2.0",
 		},
 		Result: lsp.HoverResult{
-			Contents: fmt.Sprintf("Document: %s  Characters: %d", uri, len(document.Content)),
+			Contents: content,
 		},
 	}
 
@@ -63,10 +95,21 @@ func (s *State) Hover(id int, uri string, position int) lsp.HoverResponse {
 func (s *State) Definition(id int, uri string, line int, store *configstore.ConfigStore) lsp.DefinitionResponse {
 	logger := utils.GetLogger()
 	document := s.Documents[uri]
+
 	section := utils.GetSectionNameFromUri(uri)
-	settingNameFromCode := configstore.GetSettingNameByLine([]byte(document.Content), line)
+
+	settingNameFromCode, err := configstore.GetSettingNameByLine([]byte(document.Content), line)
+	if err != nil {
+		logger.Error("Definition", "Setting Name From Code Error", err)
+	}
 	var setting configstore.Setting
 
+	if _, ok := store.Sections[section]; !ok {
+		section, _ = configstore.GetSectionNameFromLsHint([]byte(document.Content)) //
+	}
+
+	logger.Debug("Definition", "Section Name From Ls Hint", section)
+	logger.Debug("Definition", "Setting", settingNameFromCode)
 	if len(settingNameFromCode) > 0 {
 		if value, ok := store.Sections[section]; ok {
 			if setting, ok = value.Settings[settingNameFromCode[0]]; !ok {
@@ -74,6 +117,7 @@ func (s *State) Definition(id int, uri string, line int, store *configstore.Conf
 			}
 		}
 	}
+
 	return lsp.DefinitionResponse{
 		Response: lsp.Response{
 			ID:  &id,
@@ -91,6 +135,36 @@ func (s *State) Definition(id int, uri string, line int, store *configstore.Conf
 					Character: setting.Metadata.RightCol,
 				},
 			},
+		},
+	}
+}
+
+func (s *State) Completion(id int, uri string, store *configstore.ConfigStore) lsp.TextDocumentCompletionResponse {
+	document := s.Documents[uri]
+	section := utils.GetSectionNameFromUri(uri)
+	sectionList := store.ListSettings(section)
+
+	if len(sectionList) == 0 {
+		section, _ = configstore.GetSectionNameFromLsHint([]byte(document.Content))
+		sectionList = store.ListSettings(section)
+	}
+
+	var items []lsp.CompletionItem
+	for _, section := range sectionList {
+		items = append(items, lsp.CompletionItem{
+			Label:  section.Key,
+			Detail: fmt.Sprintf("%s = %s", section.Key, section.Value),
+			Kind:   5,
+		})
+	}
+	return lsp.TextDocumentCompletionResponse{
+		Response: lsp.Response{
+			RPC: "2.0",
+			ID:  &id,
+		},
+		Result: lsp.CompletionList{
+			IsIncomplete: false,
+			Items:        items,
 		},
 	}
 }

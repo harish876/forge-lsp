@@ -1,6 +1,6 @@
 import * as path from "path";
 import { workspace, ExtensionContext } from "vscode";
-
+import { tmpdir } from "os"
 import {
   LanguageClient,
   LanguageClientOptions,
@@ -22,6 +22,7 @@ export function activate(context: ExtensionContext) {
     },
     debug: {
       command: "/home/harish/personal/forge-lsp/server/tmp/main",
+      args:["--level", "DEBUG"],
       transport: TransportKind.stdio,
     }
   };

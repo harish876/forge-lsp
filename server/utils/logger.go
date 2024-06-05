@@ -30,6 +30,11 @@ func GetLogger() *slog.Logger {
 	return logger
 }
 
+func GetTestLogger() *slog.Logger {
+	logger = slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	return logger
+}
+
 func getLogLevel(level string) slog.Leveler {
 	switch level {
 	case "INFO":

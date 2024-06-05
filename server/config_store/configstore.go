@@ -5,10 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/harish876/forge-lsp/utils"
 	sitter "github.com/harish876/go-tree-sitter"
-	ini "github.com/harish876/go-tree-sitter/ini"
-	"github.com/harish876/go-tree-sitter/python"
 )
 
 var (
@@ -94,111 +91,6 @@ func (store *ConfigStore) OpenConfigFile(filePath string) ([]byte, error) {
 	return sourceCode, nil
 }
 
-func (store *ConfigStore) UpdateSections(sourceCode []byte) error {
-	logger := utils.GetLogger()
-	lang := ini.GetLanguage()
-	query := []byte(`
-	(
-		document(
-		 section(
-		  section_name (
-			  text
-		  ) @sectionName
-		 )
-		)
-	  )
-	`)
-
-	q, err := GetQueryCursor(lang, sourceCode, query)
-	if q.Node.HasError() {
-		logger.Debug("Syntax Tree has errors")
-	}
-
-	if err != nil {
-		fmt.Println(err)
-	}
-	q.Cursor.Exec(q.Query, q.Node)
-
-	for {
-		m, ok := q.Cursor.NextMatch()
-		if !ok {
-			break
-		}
-		m = q.Cursor.FilterPredicates(m, q.SourceCode)
-		for _, c := range m.Captures {
-			store.Sections[c.Node.Content(sourceCode)] = NewSection()
-		}
-	}
-
-	for key := range store.Sections {
-		settingsMap := store.Sections[key].Settings
-		_ = settingsMap
-		query := []byte(fmt.Sprintf(`
-		(
-			document(
-			 section(
-			  section_name (
-				  text
-			  ) @sectionName
-			  (#match? @sectionName %s)
-			 )
-			 (setting
-				setting_name: (setting_name) @name
-				setting_value: (setting_value) @value
-			 ) @setting
-		   )
-		)
-		`, key))
-
-		q, err := GetQueryCursor(lang, sourceCode, query)
-		// if q.Node.HasError() {
-		// 	logger.Println("Syntax Tree has errors")
-		// 	continue
-		// }
-		if err != nil {
-			return err
-		}
-		q.Cursor.Exec(q.Query, q.Node)
-
-		for {
-			m, ok := q.Cursor.NextMatch()
-			if !ok {
-				break
-			}
-			m = q.Cursor.FilterPredicates(m, q.SourceCode)
-			var name, value string
-			var row, lcol, rcol int
-			for _, c := range m.Captures {
-				switch q.Query.CaptureNameForId(c.Index) {
-				case "name":
-					name = string(sourceCode[c.Node.StartByte():c.Node.EndByte()])
-					row = int(c.Node.StartPoint().Row)
-					lcol = int(c.Node.StartPoint().Column)
-					rcol = int(c.Node.EndPoint().Column)
-				case "value":
-					value = string(sourceCode[c.Node.StartByte():c.Node.EndByte()])
-				}
-			}
-			if len(name) != 0 && len(value) != 0 {
-				settingsMap[name] = Setting{
-					Key:   name,
-					Value: value,
-					Metadata: SettingMetadata{
-						Row:      row,
-						LeftCol:  lcol,
-						RightCol: rcol,
-					},
-				}
-			}
-		}
-		if value, ok := store.Sections[key]; ok {
-			value.Settings = settingsMap
-			store.Sections[key] = value
-		}
-	}
-	return nil
-}
-
 func (store *ConfigStore) ListSections() []string {
 	var result []string
 	for key := range store.Sections {
@@ -222,86 +114,6 @@ func (store *ConfigStore) ListSettings(section string) []Setting {
 	if value, ok := store.Sections[section]; ok {
 		for _, value := range value.Settings {
 			result = append(result, value)
-		}
-	}
-	return result
-}
-
-func GetSettingNameByLine(sourceCode []byte, line int) []string {
-	logger := utils.GetLogger()
-	var result []string
-	lang := python.GetLanguage()
-	query := []byte(`
-	(
-		module (
-			(_
-			body: (block
-				(_
-				   body: (block
-					  (expression_statement
-						   [(_
-						   right:(call
-							function: (attribute
-							   object: (identifier) @object
-							   (#match? @object "config")
-								attribute: (identifier) @attribute
-								(#match? @attribute "get")
-							  )
-							 arguments: (argument_list
-								(string (string_content) @setting))
-							  )
-							) 
-						   (call
-							function: (_
-							   object: (identifier) @object
-							   (#match? @object "config")
-								attribute: (identifier) @attribute
-								(#match? @attribute "get")
-							  )
-							 arguments: (argument_list
-								(string (string_content) @setting))
-							 )
-							(call
-								arguments: (argument_list
-								(call
-									function: (_
-									   object: (identifier) @object
-									   (#match? @object "config")
-									   attribute: (identifier) @attribute
-									   (#match? @attribute "get")
-							  		)
-								 	arguments: (argument_list
-										(string (string_content) @setting)
-									))))	
-						    	]
-							)
-						)
-					)
-				)	 
-			) 
-	    )
-	)
-	`)
-	q, err := GetQueryCursor(lang, sourceCode, query)
-	if q.Node.HasError() {
-		logger.Debug("Syntax Tree has errors")
-	}
-
-	if err != nil {
-		fmt.Println(err)
-	}
-	q.Cursor.Exec(q.Query, q.Node)
-
-	for {
-		m, ok := q.Cursor.NextMatch()
-		if !ok {
-			break
-		}
-		m = q.Cursor.FilterPredicates(m, q.SourceCode)
-		for _, c := range m.Captures {
-			if c.Node.Type() == "string_content" && uint32(line) == c.Node.StartPoint().Row {
-				result = append(result, c.Node.Content(sourceCode))
-			}
 		}
 	}
 	return result

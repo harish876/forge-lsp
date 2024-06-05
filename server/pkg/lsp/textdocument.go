@@ -1,12 +1,5 @@
 package lsp
 
-import (
-	"fmt"
-
-	configstore "github.com/harish876/forge-lsp/config_store"
-	"github.com/harish876/forge-lsp/utils"
-)
-
 type TextDocumentItem struct {
 	/**
 	 * The text document's URI.
@@ -256,27 +249,4 @@ type Location struct {
 
 type DefinitionResult struct {
 	Contents string `json:"contents"`
-}
-
-func NewTextDocumentCompletionResponse(id int, uri string, store *configstore.ConfigStore) TextDocumentCompletionResponse {
-	section := utils.GetSectionNameFromUri(uri)
-	sectionList := store.ListSettings(section)
-	var items []CompletionItem
-	for _, section := range sectionList {
-		items = append(items, CompletionItem{
-			Label:  section.Key,
-			Detail: fmt.Sprintf("%s = %s", section.Key, section.Value),
-			Kind:   5,
-		})
-	}
-	return TextDocumentCompletionResponse{
-		Response: Response{
-			RPC: "2.0",
-			ID:  &id,
-		},
-		Result: CompletionList{
-			IsIncomplete: false,
-			Items:        items,
-		},
-	}
 }
