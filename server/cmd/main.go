@@ -156,6 +156,8 @@ func handlerMessage(logger *slog.Logger, method string, content []byte, state an
 		logger.Info("textDocument/completion",
 			"TriggerCharacter",
 			request.Params.Context.TriggerCharacter,
+			"Position",
+			request.Params.Position.Line,
 		)
 		msg := state.Completion(request.ID, request.Params.TextDocument.URI, store)
 		reply := writeResponse(writer, msg)
