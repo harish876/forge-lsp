@@ -1,4 +1,4 @@
-# Forge-LSP - LSP Server for the Forge ETL Framework and a VS code client.
+# Forge-LSP - LSP Server and VSCode client for Forge ETL Framework.
 
 ## Table of Contents
 - [Overview](#overview)
@@ -32,4 +32,5 @@ So the aim here was to provide code completion/intellisense for me to know what 
 2. Add Goto definition and add meta data information to each setting. ✅
 3. Deafault Logfile location to be changed. ⭕
 4. VS Code marketplace this bad boy once logging is resolved. ⭕
+5. Refine a bunch of things and refactor a bunch of code. I dont like the random autocompletions, fix that first. ⭕
 
